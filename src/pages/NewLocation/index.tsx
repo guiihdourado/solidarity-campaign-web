@@ -1,8 +1,9 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { SubmitHandler, FormHandles } from '@unform/core';
 import * as Yup from 'yup';
 import { FiArrowLeft, FiUser } from 'react-icons/fi';
 import { Form } from '@unform/web';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import filter from 'lodash/filter';
 
 import api from '../../services/api';
@@ -27,7 +28,6 @@ interface Location {
   place_name: string;
   place_localization: string;
   user_id: string;
-  name: string;
 }
 
 interface User {
@@ -41,9 +41,14 @@ interface UserOption {
   label: string;
 }
 
+interface ParamTypes {
+  campaignId: string;
+}
+
 const NewLocation: React.FC = () => {
-  const formRef = useRef(null);
+  const formRef = useRef<FormHandles>(null as FormHandles);
   const history = useHistory();
+  const { campaignId } = useParams<ParamTypes>();
   const { addToast } = useToast();
 
   const [users, setUsers] = useState<UserOption[]>([]);
@@ -67,52 +72,13 @@ const NewLocation: React.FC = () => {
 
       setUsers(filteredUsers);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locations]);
 
-  const handleSubmit = useCallback(
-    async (data: any) => {
+  const handleSubmit: SubmitHandler<Location> = useCallback(
+    async (data, { reset }) => {
       try {
-        formRef.current?.setErrors({});
-        const schema = Yup.object().shape({
-          name: Yup.string().required('Nome obrigatório')
-        });
-
-        await schema.validate(data, {
-          abortEarly: false
-        });
-
-        await api.post('products', data);
-
-        addToast({
-          type: 'success',
-          title: 'Produto',
-          description: 'Produto cadastrado com sucesso.'
-        });
-
-        history.push(`/products`);
-      } catch (err) {
-        if (err instanceof Yup.ValidationError) {
-          const errors = getValidationErrors(err);
-
-          formRef.current?.setErrors(errors);
-
-          return;
-        }
-
-        addToast({
-          type: 'error',
-          title: 'Product',
-          description: 'Erro ao cadastrar um produto. Tente novamente.'
-        });
-      }
-    },
-    [addToast, history]
-  );
-
-  const handleAddLocation = useCallback(
-    async (data: Location) => {
-      try {
-        formRef.current?.setErrors({});
+        formRef.current.setErrors({});
         const schema = Yup.object().shape({
           place_name: Yup.string().required('Nome do local obrigatório'),
           place_localization: Yup.string().required(
@@ -133,13 +99,16 @@ const NewLocation: React.FC = () => {
 
         setLocations(oldState => [...oldState, data]);
 
-        formRef?.current?.setFieldValue('user_id', '');
-        formRef?.current?.reset();
+        reset({
+          place_name: '',
+          place_localization: '',
+          user_id: []
+        });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           const errors = getValidationErrors(err);
 
-          formRef.current?.setErrors(errors);
+          formRef.current.setErrors(errors);
 
           return;
         }
@@ -156,13 +125,13 @@ const NewLocation: React.FC = () => {
 
   return (
     <Container>
-      <BackButton to={`/products`}>
+      <BackButton to={`/campaigns/${campaignId}/quotations`}>
         <FiArrowLeft />
         Voltar
       </BackButton>
-      <h1>Novo produto</h1>
+      <h1>Novo local</h1>
       <AnimationContainer>
-        <Form ref={formRef} onSubmit={handleAddLocation}>
+        <Form ref={formRef} onSubmit={handleSubmit}>
           <Input name="place_name" placeholder="Nome do Local" icon={FiUser} />
           <Input
             name="place_localization"
@@ -181,18 +150,18 @@ const NewLocation: React.FC = () => {
               options={users}
             />
           </SelectDiv>
-          <Button type="submit">Adicionar Produto</Button>
+          <Button type="submit">Adicionar Local</Button>
         </Form>
-        <Locations>
-          {locations.map((location, key) => (
-            <div key={key}>
-              <h4>{location.place_name}</h4>
-              <p>{location.place_localization}</p>
-              <span>{location.name}</span>
-            </div>
-          ))}
-        </Locations>
       </AnimationContainer>
+      <Locations>
+        {locations.map((location, key) => (
+          <div key={key}>
+            <h4>{location.place_name}</h4>
+            <p>{location.place_localization}</p>
+            <span>{location.user_id}</span>
+          </div>
+        ))}
+      </Locations>
     </Container>
   );
 };
