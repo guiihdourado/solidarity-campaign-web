@@ -43,7 +43,7 @@ export const Container = styled.div<ContainerProps>`
       color: #ff9000;
     `}
 
-  select {
+  input {
     flex: 1;
     background: transparent;
     border: 0;

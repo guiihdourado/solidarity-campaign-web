@@ -15,6 +15,13 @@ export const Container = styled.div`
   }
 `;
 
+export const ContainerLoading = styled.div`
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  place-content: center;
+`;
+
 export const BackButton = styled(Link)`
   display: flex;
   text-decoration: none;

@@ -32,7 +32,7 @@ const ListUsers: React.FC = () => {
         setLoading(false);
       }, 1);
     });
-  });
+  }, []);
 
   if (loading) {
     return (
